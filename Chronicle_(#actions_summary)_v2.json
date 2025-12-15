@@ -1,0 +1,525 @@
+{
+"name": "Chronicle_(#actions_summary)_v2.json",
+"nodes": [
+  {
+    "parameters": {
+      "model": "nex-agi/deepseek-v3.1-nex-n1:free",
+      "options": {
+        "maxTokens": 2500
+      }
+    },
+    "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+    "typeVersion": 1,
+    "position": [
+      56,
+      728
+    ],
+    "id": "63a8f3c0-d0da-4f31-840b-774df4aff5f2",
+    "name": "OpenRouter Chat Model1",
+    "credentials": {
+      "openRouterApi": {
+        "id": "r79IBN16aZtPIN8T",
+        "name": "OpenRouter account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "promptType": "define",
+      "text": "=You are an expert time-log analyzer. Your task is to take a raw transcript of timestamped activity notes and produce a complete daily time log covering exactly from 00:00 to 23:59 with no gaps or overlaps.\n\n# Transcript\n{{ $json.transcript }}\n\n# Rules\n- First classify each entry as a start, continuation, end, or transition. Then create time blocks for each identified activity with a high-fidelity, concise description.\n- Activities that occur close to midnight (00:00 and 23:59) likely extend to and from midnight.\n- If the duration is unrealistically long for the described activity, truncate to a reasonable length (typically 60–180 minutes based on context) and fill the excess with \"Unaccounted\".\n- Every activity must be assigned exactly one category from this list:\n  - Deep Work (focused work with the goal of producing a deliverable, e.g., complex programming, debugging difficult problems, immediately applicable learning)\n  - Shallow Work (lighter productive tasks, tool setup, chatting about productivity systems, passive learning, light research)\n  - Health (eating, exercise, personal care, cooking, medical)\n  - Relationships (family events, parties, social interactions)\n  - Structured Study (dedicated skill acquisition, e.g. courses, practice, exams, lessons, coding puzzles)\n  - Leisure (YouTube, casual browsing, relaxation)\n  - Sleep (sleeping)\n  - Unaccounted (Unaccounted)\n\n# Example\n00:00–01:30 (90m) — Working on programming puzzle (Structured Study)\n01:30–09:00 (450m) — Sleeping (Sleep)\n09:00–10:00 (60m) — Discussing AI tools and productivity (Shallow Work)\n10:00–12:00 (120m) — Adding a new feature to project (Deep Work)\n...\n23:40–23:59 (19m) — Watching a YouTube video about Rome (Leisure)\n\n# Output\nOutput only the time log with no additional markdown or commentary.",
+      "batching": {}
+    },
+    "type": "@n8n/n8n-nodes-langchain.chainLlm",
+    "typeVersion": 1.7,
+    "position": [
+      -16,
+      504
+    ],
+    "id": "132394ea-15b5-4fac-9af3-dfa10fcf18da",
+    "name": "Synthesize final summary JSON",
+    "onError": "continueErrorOutput"
+  },
+  {
+    "parameters": {
+      "jsCode": "// n8n Function Node: Spicy Plain Message Time Log – Handles ```json\n\nconst CATEGORY_EMOJIS = {\n    \"Deep Work\": \"🧠\",\n    \"Shallow Work\": \"📋\",\n    \"Health\": \"💪\",\n    \"Relationships\": \"👥\",\n    \"Leisure\": \"🎮\",\n    \"Sleep\": \"😴\",\n    \"Structured Study\": \"📚\",\n    \"Unaccounted\": \"❓\",\n};\n\nfunction timeToMinutes(time) {\n    const [h, m] = time.split(\":\").map(Number);\n    return h * 60 + m;\n}\n\nfunction minutesToStr(minutes) {\n    const h = Math.floor(minutes / 60);\n    const m = minutes % 60;\n    return h > 0 ? `${h}h${m > 0 ? ` ${m}m` : ''}` : `${m}m`;\n}\n\nconst date = $('Select date as today').first().json.date.slice(0,10)\n\nfunction parseTimeLog(markdown) {\n    const lines = markdown.trim().split('\\n');\n\n    const result = [];\n    \n    // Regex for the time part: HH:MM–HH:MM (Xm) — Rest of the line\n    const regex = /^(\\d{2}:\\d{2})[-–—](\\d{2}:\\d{2})\\s*\\((\\d+)m\\)\\s*[—–-]\\s*(.+?)\\s*\\((\\w+(?:\\s\\w+)*)\\)$/;    \n    lines.forEach(line => {\n        const trimmed = line.trim();\n        const match = regex.exec(trimmed);\n        if (match) {\n            const [, start, end, durationStr, description, category] = match;\n            \n            result.push({\n                start: start,\n                end: end,\n                duration: parseInt(durationStr, 10),\n                activity: description,\n                category: category\n            });\n        }\n    });\n    \n    return result;\n}\n\nconst entries = parseTimeLog($input.first().json.text);\n\n// Calculate totals\nconst totals = {};\nlet totalDayMinutes = 0;\nfor (const entry of entries) {\n    const duration = entry.duration\n    totals[entry.category] = (totals[entry.category] || 0) + duration;\n    totalDayMinutes += duration;\n}\n\n// Sort categories descending\nconst sortedCategories = Object.entries(totals).sort((a, b) => b[1] - a[1]);\n\n// Build message\nlet message = `**[Daily Time Log – ${date}]**\\n\\n`;\n\nmessage += \"**Categories**\\n\";\nsortedCategories.forEach(([cat, mins]) => {\n    const percent = totalDayMinutes > 0 ? Math.round((mins / totalDayMinutes) * 100) : 0;\n    const bar = \"█\".repeat(Math.round(percent / 10)) + \"░\".repeat(10 - Math.round(percent / 10));\n    message += `${CATEGORY_EMOJIS[cat] || \"📌\"} **${cat}** — ${minutesToStr(mins)} ${bar} ${percent}%\\n`;\n});\n\nmessage += `\\n**Activity Breakdown**\\n`;\n\nfor (const entry of entries) {\n    const durationStr = minutesToStr(timeToMinutes(entry.end) - timeToMinutes(entry.start));\n    const act = entry.activity.length > 80 ? entry.activity.slice(0,77) + \"...\" : entry.activity;\n    const emoji = CATEGORY_EMOJIS[entry.category];\n    message += `${emoji} ${entry.start}–${entry.end} (${durationStr}) — ${act}\\n`;\n}\n\nreturn {\n        summary: message.trimEnd()\n    };"
+    },
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      336,
+      408
+    ],
+    "id": "ce5fffd1-21f4-4db9-9521-5bb769f25f71",
+    "name": "Post process JSON into pretty summary"
+  },
+  {
+    "parameters": {
+      "assignments": {
+        "assignments": [
+          {
+            "id": "bc5e859a-ebb4-4c80-9503-6d405dc60722",
+            "name": "date",
+            "value": "={{ $now.minus(2, 'days').startOf('day')}}",
+            "type": "string"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+      -1136,
+      356
+    ],
+    "id": "6c5c6185-097b-4d54-8ebe-879b50aa2b6a",
+    "name": "Select date as today"
+  },
+  {
+    "parameters": {
+      "rule": {
+        "interval": [
+          {
+            "triggerAtHour": 23,
+            "triggerAtMinute": 55
+          }
+        ]
+      }
+    },
+    "type": "n8n-nodes-base.scheduleTrigger",
+    "typeVersion": 1.3,
+    "position": [
+      -1360,
+      356
+    ],
+    "id": "1aa8b251-9af8-4af0-b94d-42de3b68204f",
+    "name": "Every day at 23:55"
+  },
+  {
+    "parameters": {
+      "jsCode": "// Build structured entries using Luxon DateTime\nconst entries = [];\n\nfor (const item of $input.all()) {\n  const dt = DateTime.fromISO(item.json.timestamp);\n  const timeStr = dt.toFormat('HH:mm');              // \"23:45\"\n  const minutesSinceMidnight = dt.hour * 60 + dt.minute;\n  \n  entries.push({\n    timeStr,\n    minutes: minutesSinceMidnight,\n    content: item.json.content?.trim() || ''\n  });\n}\n\n// Sort by time (defensive, in case input order is off)\nentries.sort((a, b) => a.minutes - b.minutes);\n\n// Build formatted lines with durations\nconst lines = [];\n\nfor (let i = 0; i < entries.length; i++) {\n  const entry = entries[i];\n\n  const diff = i == 0 ? entry.minutes :\n    entry.minutes - entries[i - 1].minutes;\n\n  const durationStr = '' // ` (${diff} mins)`;\n\n  \n  lines.push(`**${entry.timeStr}**${durationStr} ${entry.content}`);\n}\n\n// Add cutoff entry if last message within 60 mins of midnight\nif (entries.length > 0) {\n  const lastMinutes = entries[entries.length - 1].minutes;\n  const minsToMidnight = 1440 - lastMinutes - 1;\n  \n  if (minsToMidnight <= 60 && minsToMidnight > 0) {\n   // lines.push(`**23:59** (${minsToMidnight} mins) likely continuation of above`);\n  }\n}\n\nreturn { transcript: lines.join('\\n'),\n       date: $('Select date as today').first().json.date,\n       channel_id: $input.first().json.id};"
+    },
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      -240,
+      356
+    ],
+    "id": "2a0f7cbc-92d4-4179-be59-db6dd1139afc",
+    "name": "Create compact transcript"
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "BHFwj2lAWNvwGXTx",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/BHFwj2lAWNvwGXTx",
+        "cachedResultName": "Safe send message to #bot-logs"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "message": "=**[Transcript for  {{ $json.date.slice(0,10) }}]**\n{{ $json.transcript }}"
+        },
+        "matchingColumns": [
+          "transcript"
+        ],
+        "schema": [
+          {
+            "id": "message",
+            "displayName": "message",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.2,
+    "position": [
+      48,
+      208
+    ],
+    "name": "Safe send transcript to #bot-logs",
+    "id": "fc314ca3-72e3-4cdc-8564-b435937c2954"
+  },
+  {
+    "parameters": {
+      "operation": "get",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "1448496160573755412",
+        "mode": "list",
+        "cachedResultName": "actions",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388/1448496160573755412"
+      }
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      -912,
+      356
+    ],
+    "id": "baf1c3a9-aacf-4eae-96da-d2f5619cac9a",
+    "name": "Select #actions channel",
+    "webhookId": "5488cdda-ffc0-419a-9daf-1a16373d9c67",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "xgAFgAwt0K3wbqaL",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/xgAFgAwt0K3wbqaL",
+        "cachedResultName": "Fetch Discord messages from date"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "target_date": "={{ $('Select date as today').item.json.date }}",
+          "channel_id": "={{ $json.id }}"
+        },
+        "matchingColumns": [],
+        "schema": [
+          {
+            "id": "target_date",
+            "displayName": "target_date",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string"
+          },
+          {
+            "id": "channel_id",
+            "displayName": "channel_id",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string"
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {
+        "waitForSubWorkflow": true
+      }
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.3,
+    "position": [
+      -688,
+      356
+    ],
+    "id": "d236ccb8-6c51-442f-9c7d-bb445ae2ab1e",
+    "name": "Fetch Discord messages from date"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "bac469dc-ed9d-4e20-b0a4-1672253d0249",
+            "leftValue": "={{ $json.author.username }}",
+            "rightValue": "chr15",
+            "operator": {
+              "type": "string",
+              "operation": "equals"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.filter",
+    "typeVersion": 2.3,
+    "position": [
+      -464,
+      356
+    ],
+    "id": "824f0e1f-6f1d-49bf-baf2-f254d3794718",
+    "name": "Find sent by chr15"
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "BHFwj2lAWNvwGXTx",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/BHFwj2lAWNvwGXTx",
+        "cachedResultName": "Safe send message to #bot-logs"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "message": "={{ $input?.first()?.json?.text || \"Something went wrong with the Chronicle Bot\" }}"
+        },
+        "matchingColumns": [
+          "transcript"
+        ],
+        "schema": [
+          {
+            "id": "message",
+            "displayName": "message",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.3,
+    "position": [
+      336,
+      600
+    ],
+    "id": "db620e7e-6ba3-45e0-8c55-a1138b79da0b",
+    "name": "Safe send error to #bot-logs"
+  },
+  {
+    "parameters": {
+      "operation": "get",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "1448616449022234714",
+        "mode": "list",
+        "cachedResultName": "summary",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388/1448616449022234714"
+      }
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      560,
+      408
+    ],
+    "id": "5718e824-5ac8-4a70-99ff-8cfe2343c4ca",
+    "name": "Select #summary channel",
+    "webhookId": "8dd47350-807f-4edb-8bcd-69c705368897",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "7Tr9Y04cO4tA6uGL",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/7Tr9Y04cO4tA6uGL",
+        "cachedResultName": "Safe send message to Discord channel"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "channel_id": "={{ $json.id }}",
+          "message": "={{ $('Post process JSON into pretty summary').item.json.summary }}"
+        },
+        "matchingColumns": [],
+        "schema": [
+          {
+            "id": "message",
+            "displayName": "message",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string",
+            "removed": false
+          },
+          {
+            "id": "channel_id",
+            "displayName": "channel_id",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string",
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.3,
+    "position": [
+      784,
+      408
+    ],
+    "id": "fbf32ad8-5570-429e-952c-533745fb81ef",
+    "name": "Safe send summary to #summary"
+  }
+],
+"connections": {
+  "OpenRouter Chat Model1": {
+    "ai_languageModel": [
+      [
+        {
+          "node": "Synthesize final summary JSON",
+          "type": "ai_languageModel",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Synthesize final summary JSON": {
+    "main": [
+      [
+        {
+          "node": "Post process JSON into pretty summary",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Safe send error to #bot-logs",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Post process JSON into pretty summary": {
+    "main": [
+      [
+        {
+          "node": "Select #summary channel",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Select date as today": {
+    "main": [
+      [
+        {
+          "node": "Select #actions channel",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Every day at 23:55": {
+    "main": [
+      [
+        {
+          "node": "Select date as today",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Create compact transcript": {
+    "main": [
+      [
+        {
+          "node": "Safe send transcript to #bot-logs",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Synthesize final summary JSON",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Select #actions channel": {
+    "main": [
+      [
+        {
+          "node": "Fetch Discord messages from date",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Find sent by chr15": {
+    "main": [
+      [
+        {
+          "node": "Create compact transcript",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Fetch Discord messages from date": {
+    "main": [
+      [
+        {
+          "node": "Find sent by chr15",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Select #summary channel": {
+    "main": [
+      [
+        {
+          "node": "Safe send summary to #summary",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}
+}
