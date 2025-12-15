@@ -1,0 +1,562 @@
+{
+"name": "Oracle (answers #questions)",
+"nodes": [
+  {
+    "parameters": {
+      "httpMethod": "POST",
+      "path": "e71fc734-30c7-46c4-bc31-a875bc2e17a7",
+      "options": {}
+    },
+    "type": "n8n-nodes-base.webhook",
+    "typeVersion": 2.1,
+    "position": [
+      -1024,
+      304
+    ],
+    "id": "43664d3c-be75-44ab-96b3-9420e2823830",
+    "name": "New message in #questions",
+    "webhookId": "e71fc734-30c7-46c4-bc31-a875bc2e17a7"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "bf12d283-a920-41a7-a854-cba78901c11f",
+            "leftValue": "={{ $json.body.username }}",
+            "rightValue": "chr15",
+            "operator": {
+              "type": "string",
+              "operation": "equals"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      -800,
+      304
+    ],
+    "id": "c366d118-bb49-4421-858b-0cccc611dc1a",
+    "name": "If from chr15"
+  },
+  {
+    "parameters": {
+      "jsCode": "let content = $('New message in #questions').first().json.body.content\nconst channelRegex = /<#(\\d+)>/g\nreturn {\n  query: content.replaceAll(channelRegex, ''),\n  mentionedChannels: Array.from(content.matchAll(channelRegex)).map(match => match[1])\n}"
+    },
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      -352,
+      304
+    ],
+    "id": "8962c481-2be8-42ef-a889-6516ff5e8c6d",
+    "name": "Extract content and mentioned channels"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "5cbe69c5-1697-4606-97ad-a42c11f57fe4",
+            "leftValue": "={{ $('Extract content and mentioned channels').item.json.mentionedChannels }}",
+            "rightValue": "={{ $json.id }}",
+            "operator": {
+              "type": "array",
+              "operation": "contains",
+              "rightType": "any"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.filter",
+    "typeVersion": 2.3,
+    "position": [
+      96,
+      304
+    ],
+    "id": "5b60580f-f5f9-4076-ac1f-59eaa2f7779b",
+    "name": "Find mentioned channel IDs",
+    "alwaysOutputData": true
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "operation": "getAll",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "={{ $json.id }}",
+        "mode": "id"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      544,
+      208
+    ],
+    "id": "0df97e34-7d54-4750-a43d-c0a6866135a7",
+    "name": "Get last 100 messaged from mentioned channels",
+    "webhookId": "455597d7-0b79-49f7-8a84-5430bbab0f52",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "jsCode": "let output = \"\"\nfor (const item of $input.all()) {\n  let timestamp = DateTime.fromISO(item.json.timestamp).toLocaleString({\nhour:'2-digit',\nminute:'2-digit',\nhour12: false,\ntimeZone: 'America/Vancouver'\n})\n  //output += \"**\" + timestamp + \"** \"\n  output += item.json.content + \"\\n\"\n}\n\nreturn {\n  compact: output, \n  channel_id: $input.first().json.channel_id,\n  channel_name: $('Find mentioned channel IDs').first().json.name,\n  query: $('Extract content and mentioned channels').first().json.query\n}"
+    },
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      768,
+      208
+    ],
+    "id": "5a667f92-535a-4e21-b664-100643d1a4c9",
+    "name": "Concatenate into compact string"
+  },
+  {
+    "parameters": {
+      "model": "nex-agi/deepseek-v3.1-nex-n1:free",
+      "options": {
+        "maxTokens": 500
+      }
+    },
+    "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+    "typeVersion": 1,
+    "position": [
+      1064,
+      528
+    ],
+    "id": "c44eb92f-7632-4cdb-9acf-dd095eaffed3",
+    "name": "OpenRouter Chat Model",
+    "credentials": {
+      "openRouterApi": {
+        "id": "r79IBN16aZtPIN8T",
+        "name": "OpenRouter account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "promptType": "define",
+      "text": "={{ $json.channel_name ? \"<\" + $json.channel_name + \">\" + $json.compact +  \"</\" + $json.channel_name + \">\" : \"\" }}\n{{ $json.query }}",
+      "batching": {}
+    },
+    "type": "@n8n/n8n-nodes-langchain.chainLlm",
+    "typeVersion": 1.7,
+    "position": [
+      992,
+      304
+    ],
+    "id": "958ef5f1-5230-43c2-b04c-bb3b9c2eb95e",
+    "name": "Send query and channel context to LLM"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "b4582efe-794b-4131-ac9e-ded0a2e3e831",
+            "leftValue": "={{$json}}",
+            "rightValue": "",
+            "operator": {
+              "type": "object",
+              "operation": "notEmpty",
+              "singleValue": true
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      320,
+      304
+    ],
+    "id": "3d137f0d-69b7-4ab1-a379-bd1704c36c92",
+    "name": "If atleast 1 mentioned channel"
+  },
+  {
+    "parameters": {
+      "assignments": {
+        "assignments": [
+          {
+            "id": "b9557b28-8459-4fe2-bd7a-0e07095945e2",
+            "name": "compact",
+            "value": "",
+            "type": "string"
+          },
+          {
+            "id": "14004a48-b6c2-4d7b-b7a3-67ed6af08dcf",
+            "name": "channel_name",
+            "value": "",
+            "type": "string"
+          },
+          {
+            "id": "99eb0456-ec8f-4d4b-b12f-573e1d46cebc",
+            "name": "query",
+            "value": "={{ $('Extract content and mentioned channels').item.json.query }}",
+            "type": "string"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+      768,
+      400
+    ],
+    "id": "09d23c1d-7b59-456e-b1ea-de119d394981",
+    "name": "Edit Fields"
+  },
+  {
+    "parameters": {
+      "operation": "getAll",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      -128,
+      304
+    ],
+    "id": "e238824e-1277-4a7e-b071-ef4479bf6be9",
+    "name": "Get all channel IDs",
+    "webhookId": "e86efbd9-3106-47b7-978b-de0077048876",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "7Tr9Y04cO4tA6uGL",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/7Tr9Y04cO4tA6uGL",
+        "cachedResultName": "Safe send message to Discord channel"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "message": "={{ $json.text }}",
+          "channel_id": "={{ $('New message in #questions').item.json.body.channelId }}"
+        },
+        "matchingColumns": [],
+        "schema": [
+          {
+            "id": "message",
+            "displayName": "message",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string",
+            "removed": false
+          },
+          {
+            "id": "channel_id",
+            "displayName": "channel_id",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string",
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.3,
+    "position": [
+      1344,
+      304
+    ],
+    "id": "b82e7c49-5d82-4330-bd08-09abcff6416c",
+    "name": "Safe send response to #questions"
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "={{ $json.body.channelId }}",
+        "mode": "id"
+      },
+      "options": {},
+      "embeds": {
+        "values": [
+          {
+            "description": "Processing Request...",
+            "thumbnail": "https://i.pinimg.com/originals/b5/db/46/b5db46949d9005be06ebf248ab1dbb00.gif"
+          }
+        ]
+      }
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      -576,
+      304
+    ],
+    "id": "18912e69-03c5-4bfb-87ce-b27a75c22edb",
+    "name": "Send loading gif",
+    "webhookId": "41fdeead-06de-4dce-87b4-3ab7a58e4ec7",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "operation": "deleteMessage",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "={{ $('Send loading gif').item.json.channel_id }}",
+        "mode": "id"
+      },
+      "messageId": "={{ $('Send loading gif').item.json.id }}"
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      1568,
+      304
+    ],
+    "id": "cd5398ad-8c2f-4922-942c-ddccbc912bf8",
+    "name": "Delete a message",
+    "webhookId": "3cfc45d1-3aab-4915-a4ce-499c89519ef4",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  }
+],
+"connections": {
+  "New message in #questions": {
+    "main": [
+      [
+        {
+          "node": "If from chr15",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If from chr15": {
+    "main": [
+      [
+        {
+          "node": "Send loading gif",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Extract content and mentioned channels": {
+    "main": [
+      [
+        {
+          "node": "Get all channel IDs",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Find mentioned channel IDs": {
+    "main": [
+      [
+        {
+          "node": "If atleast 1 mentioned channel",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get last 100 messaged from mentioned channels": {
+    "main": [
+      [
+        {
+          "node": "Concatenate into compact string",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Concatenate into compact string": {
+    "main": [
+      [
+        {
+          "node": "Send query and channel context to LLM",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "OpenRouter Chat Model": {
+    "ai_languageModel": [
+      [
+        {
+          "node": "Send query and channel context to LLM",
+          "type": "ai_languageModel",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Send query and channel context to LLM": {
+    "main": [
+      [
+        {
+          "node": "Safe send response to #questions",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If atleast 1 mentioned channel": {
+    "main": [
+      [
+        {
+          "node": "Get last 100 messaged from mentioned channels",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Edit Fields",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Edit Fields": {
+    "main": [
+      [
+        {
+          "node": "Send query and channel context to LLM",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get all channel IDs": {
+    "main": [
+      [
+        {
+          "node": "Find mentioned channel IDs",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Safe send response to #questions": {
+    "main": [
+      [
+        {
+          "node": "Delete a message",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Send loading gif": {
+    "main": [
+      [
+        {
+          "node": "Extract content and mentioned channels",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}
+}
