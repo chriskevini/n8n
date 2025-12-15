@@ -1,0 +1,403 @@
+{
+"name": "Pulse_(#actions_reminder).json",
+"nodes": [
+  {
+    "parameters": {
+      "resource": "message",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "1448496160573755412",
+        "mode": "list",
+        "cachedResultName": "actions",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388/1448496160573755412"
+      },
+      "content": "Requesting current activity status...",
+      "options": {}
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      768,
+      -112
+    ],
+    "id": "1128e0f7-21f4-4d5e-83fd-8e5a20517521",
+    "name": "Send \"Requesting current activity status...\"",
+    "webhookId": "03ad0890-467a-4825-b431-ef73817d09d5",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "loose",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "c48b6200-9274-4728-99a8-da620fe56183",
+            "leftValue": "={{ $now.hour }}",
+            "rightValue": 9,
+            "operator": {
+              "type": "number",
+              "operation": "gte"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "looseTypeValidation": true,
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      -128,
+      -16
+    ],
+    "id": "c686b966-81ac-4824-8360-c37037a0fd95",
+    "name": "If it is past 9 AM"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "2bdb05c0-7b8b-4684-ac9d-668ff9374e45",
+            "leftValue": "={{ $json.timestamp.toDateTime().diffToNow('minutes') * -1 }}",
+            "rightValue": 30,
+            "operator": {
+              "type": "number",
+              "operation": "gte"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      544,
+      -16
+    ],
+    "id": "d16b62c4-f51e-4218-925d-bb90b0552b9d",
+    "name": "If it was over 30 minutes ago..."
+  },
+  {
+    "parameters": {
+      "rule": {
+        "interval": [
+          {
+            "field": "minutes",
+            "minutesInterval": 10
+          }
+        ]
+      }
+    },
+    "type": "n8n-nodes-base.scheduleTrigger",
+    "typeVersion": 1.3,
+    "position": [
+      -576,
+      -16
+    ],
+    "id": "d427062c-76c6-4e20-810a-fbae150fe486",
+    "name": "Every 10 minutes"
+  },
+  {
+    "parameters": {
+      "operation": "get",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "1448496160573755412",
+        "mode": "list",
+        "cachedResultName": "actions",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388/1448496160573755412"
+      }
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      -352,
+      -16
+    ],
+    "id": "aa56e9c5-9799-4250-875e-10a34e78d7fd",
+    "name": "In #actions channel...",
+    "webhookId": "f8271de6-cd2c-4b94-8097-f8aa8ff8f5a7",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "operation": "getAll",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "1448496160573755412",
+        "mode": "list",
+        "cachedResultName": "actions",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388/1448496160573755412"
+      },
+      "limit": 1,
+      "options": {}
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      96,
+      -112
+    ],
+    "id": "6034edb4-ccb8-4d36-a200-0787582c126e",
+    "name": "Get latest message",
+    "webhookId": "713a7b2d-555c-4d6f-8fe9-cdb85d16cfe9",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "25a31e39-2882-4fb5-80e3-0f931fe81416",
+            "leftValue": "={{ $json.author.username }}",
+            "rightValue": "Bot",
+            "operator": {
+              "type": "string",
+              "operation": "contains"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      320,
+      -112
+    ],
+    "id": "1db10eb6-92a4-497a-94f4-73635bf16cfa",
+    "name": "If it was from bot..."
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "operation": "deleteMessage",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "={{ $json.channel_id }}",
+        "mode": "id"
+      },
+      "messageId": "={{ $json.id }}"
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      544,
+      -208
+    ],
+    "id": "6ca8df51-a48d-44e8-b955-f5f9faa4ba35",
+    "name": "Delete old message",
+    "webhookId": "7ba8c42c-0dd8-4e1d-8edd-37ccd01afacd",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "xj6p9VRENKJPeaxn",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/xj6p9VRENKJPeaxn",
+        "cachedResultName": "Janitor"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "channel_id": "={{ $json.id }}"
+        },
+        "matchingColumns": [
+          "channel_id"
+        ],
+        "schema": [
+          {
+            "id": "channel_id",
+            "displayName": "channel_id",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string",
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.3,
+    "position": [
+      96,
+      80
+    ],
+    "id": "41779ffe-f1b1-4c8c-aaf5-75676919d741",
+    "name": "Call 'Janitor'"
+  }
+],
+"connections": {
+  "If it is past 9 AM": {
+    "main": [
+      [
+        {
+          "node": "Get latest message",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Call 'Janitor'",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If it was over 30 minutes ago...": {
+    "main": [
+      [
+        {
+          "node": "Send \"Requesting current activity status...\"",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      []
+    ]
+  },
+  "Every 10 minutes": {
+    "main": [
+      [
+        {
+          "node": "In #actions channel...",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "In #actions channel...": {
+    "main": [
+      [
+        {
+          "node": "If it is past 9 AM",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get latest message": {
+    "main": [
+      [
+        {
+          "node": "If it was from bot...",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If it was from bot...": {
+    "main": [
+      [
+        {
+          "node": "Delete old message",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "If it was over 30 minutes ago...",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Delete old message": {
+    "main": [
+      [
+        {
+          "node": "Send \"Requesting current activity status...\"",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}
+}
