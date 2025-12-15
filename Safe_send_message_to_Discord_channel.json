@@ -2,35 +2,52 @@
 "name": "Safe_send_message_to_Discord_channel.json",
 "nodes": [
   {
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+      640,
+      256
+    ],
+    "id": "99f93394-3f10-4136-b97a-8e3b4242a046",
+    "name": "Edit Fields",
+    "disabled": false,
     "parameters": {
-      "workflowInputs": {
-        "values": [
+      "mode": "manual",
+      "duplicateItem": false,
+      "assignments": {
+        "assignments": [
           {
-            "name": "message"
-          },
-          {
-            "name": "channel_id"
+            "id": "8201935a-1b47-4cd0-8f5e-7e53f9e1d186",
+            "name": "transcript",
+            "value": "={{ $json.transcript_length <= 2000 ? $json.transcript\n    : $json.transcript_slice(0, 1997) + \"...\" }}",
+            "type": "string"
           }
         ]
-      }
-    },
-    "id": "7d966265-7758-495c-941c-d8e23f16d3f5",
-    "typeVersion": 1.1,
-    "name": "Start",
-    "type": "n8n-nodes-base.executeWorkflowTrigger",
-    "position": [
-      432,
-      256
-    ]
+      },
+      "includeOtherFields": false,
+      "options": {}
+    }
   },
   {
     "parameters": {
       "assignments": {
         "assignments": [
           {
-            "id": "8201935a-1b47-4cd0-8f5e-7e53f9e1d186",
-            "name": "message",
-            "value": "={{ $json.message.length <= 2000 ? $json.message\n    : $json.message.slice(0, 1997) + \"...\" }}",
+            "id": "91adcaf3-bf53-4a87-a9a5-e5aff6c657fa",
+            "name": "text_length",
+            "value": "={{ $json.text.length }}",
+            "type": "string"
+          },
+          {
+            "id": "812072b4-8e97-4310-9477-877456087d07",
+            "name": "text_slice",
+            "value": "={{ $json.text.slice }}",
+            "type": "string"
+          },
+          {
+            "id": "47a5d33d-33a7-4949-9796-fa6d2c0f2b31",
+            "name": "text",
+            "value": "={{ $json.text }}",
             "type": "string"
           }
         ]
@@ -40,43 +57,37 @@
     "type": "n8n-nodes-base.set",
     "typeVersion": 3.4,
     "position": [
-      656,
+      848,
       256
     ],
-    "id": "99f93394-3f10-4136-b97a-8e3b4242a046",
-    "name": "Truncate message if over 2000 chars"
+    "id": "deb0ee32-3923-4630-8482-1b0de062a94c",
+    "name": "Return"
   },
   {
-    "parameters": {
-      "resource": "message",
-      "guildId": {
-        "__rl": true,
-        "value": "754207117157859388",
-        "mode": "list",
-        "cachedResultName": "chris's server",
-        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
-      },
-      "channelId": {
-        "__rl": true,
-        "value": "={{ $('Start').item.json.channel_id }}",
-        "mode": "id"
-      },
-      "content": "={{ $json.message }}",
-      "options": {}
-    },
-    "type": "n8n-nodes-base.discord",
-    "typeVersion": 2,
+    "id": "03967c6d-0a95-4384-9467-2a86f96c5a8e",
+    "typeVersion": 1.1,
+    "name": "Start",
+    "type": "n8n-nodes-base.executeWorkflowTrigger",
     "position": [
-      896,
+      432,
       256
     ],
-    "id": "7be4992a-52c0-4275-a76a-67c3c14be6de",
-    "name": "Send message",
-    "webhookId": "b958a49d-6f38-4313-9600-0e5407afc902",
-    "credentials": {
-      "discordBotApi": {
-        "id": "hvetTjtpeKFB1V0I",
-        "name": "Discord Bot account"
+    "parameters": {
+      "workflowInputs": {
+        "values": [
+          {
+            "name": "transcript_length",
+            "type": "any"
+          },
+          {
+            "name": "transcript_slice",
+            "type": "any"
+          },
+          {
+            "name": "transcript",
+            "type": "any"
+          }
+        ]
       }
     }
   }
@@ -86,23 +97,23 @@
     "main": [
       [
         {
-          "node": "Truncate message if over 2000 chars",
+          "node": "Edit Fields",
           "type": "main",
           "index": 0
         }
       ]
     ]
   },
-  "Truncate message if over 2000 chars": {
+  "Edit Fields": {
     "main": [
       [
         {
-          "node": "Send message",
+          "node": "Return",
           "type": "main",
           "index": 0
         }
       ]
     ]
   }
-}
+},
 }
