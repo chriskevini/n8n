@@ -223,7 +223,7 @@
       "workflowInputs": {
         "mappingMode": "defineBelow",
         "value": {
-          "message": "=Pushed {{ $('Set Filename').item.json.filename }} to n8n repo."
+          "message": "=Pushed {{ $('Set Filename').item.json.filename }}{{ $('Set commit message').item.json.commit_message ? \"with message: \" + $('Set commit message').item.json.commit_message : \"\"}}"
         },
         "matchingColumns": [
           "message"
