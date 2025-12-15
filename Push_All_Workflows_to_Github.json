@@ -1,0 +1,527 @@
+{
+"name": "Push_All_Workflows_to_Github.json",
+"nodes": [
+  {
+    "parameters": {},
+    "type": "n8n-nodes-base.manualTrigger",
+    "typeVersion": 1,
+    "position": [
+      -320,
+      128
+    ],
+    "id": "e2e730f5-bdbe-4e8c-a368-bf405636f5ec",
+    "name": "When clicking ‘Execute workflow’"
+  },
+  {
+    "parameters": {
+      "resource": "file",
+      "operation": "edit",
+      "owner": {
+        "__rl": true,
+        "value": "chriskevini",
+        "mode": "name"
+      },
+      "repository": {
+        "__rl": true,
+        "value": "n8n",
+        "mode": "name"
+      },
+      "filePath": "={{ $('Set Filename').item.json.filename }}",
+      "binaryData": true,
+      "binaryPropertyName": "workflow_JSON",
+      "commitMessage": "=Update {{ $('If not archived').item.json.name }}"
+    },
+    "type": "n8n-nodes-base.github",
+    "typeVersion": 1.1,
+    "position": [
+      2688,
+      256
+    ],
+    "id": "47abfe19-a50a-484a-b934-f83dcf7f3f39",
+    "name": "Edit a file",
+    "webhookId": "86630277-3cdd-46a5-8979-5944638dc7d6",
+    "credentials": {
+      "githubApi": {
+        "id": "1zNcLOJ1GGbLd9yT",
+        "name": "N8N"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "filters": {},
+      "requestOptions": {}
+    },
+    "type": "n8n-nodes-base.n8n",
+    "typeVersion": 1,
+    "position": [
+      352,
+      128
+    ],
+    "id": "16f42a6b-ed5d-444a-8bb5-d63aa2312fe2",
+    "name": "Get many workflows",
+    "credentials": {
+      "n8nApi": {
+        "id": "DIY6XVnD28bUTQv6",
+        "name": "n8n account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "options": {}
+    },
+    "type": "n8n-nodes-base.splitInBatches",
+    "typeVersion": 3,
+    "position": [
+      784,
+      128
+    ],
+    "id": "254d4464-b5fe-4531-9a4b-3d54579a6c24",
+    "name": "Loop Over Items",
+    "executeOnce": false
+  },
+  {
+    "parameters": {
+      "resource": "file",
+      "operation": "list",
+      "owner": {
+        "__rl": true,
+        "value": "chriskevini",
+        "mode": "name"
+      },
+      "repository": {
+        "__rl": true,
+        "value": "n8n",
+        "mode": "list",
+        "cachedResultName": "n8n",
+        "cachedResultUrl": "https://github.com/chriskevini/n8n"
+      }
+    },
+    "type": "n8n-nodes-base.github",
+    "typeVersion": 1.1,
+    "position": [
+      -96,
+      128
+    ],
+    "id": "87761a73-fe18-49bd-b077-51bdf229ae5f",
+    "name": "List files",
+    "webhookId": "55a1a0db-b977-4975-88fb-367f07533729",
+    "credentials": {
+      "githubApi": {
+        "id": "1zNcLOJ1GGbLd9yT",
+        "name": "N8N"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "fieldsToAggregate": {
+        "fieldToAggregate": [
+          {
+            "fieldToAggregate": "name"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.aggregate",
+    "typeVersion": 1,
+    "position": [
+      128,
+      128
+    ],
+    "id": "34cc8c2c-1c95-489b-bebf-5785a741cfa4",
+    "name": "Get list of filenames"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "b2507fcc-2289-48d3-9499-c67ebf8e0067",
+            "leftValue": "={{ $('Get list of filenames').item.json.name }}",
+            "rightValue": "={{$('If not archived').item.json.name}}.json",
+            "operator": {
+              "type": "array",
+              "operation": "contains",
+              "rightType": "any"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      2256,
+      176
+    ],
+    "id": "dfedd548-756f-4a58-b4d1-a45809bc6de5",
+    "name": "If file exists"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "c629e34c-b45c-4372-b64d-7a3763bc250b",
+            "leftValue": "={{ $json.isArchived }}",
+            "rightValue": false,
+            "operator": {
+              "type": "boolean",
+              "operation": "equals"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      1232,
+      128
+    ],
+    "id": "c30ba032-ad54-4680-a620-7b73910397cd",
+    "name": "If not archived"
+  },
+  {
+    "parameters": {
+      "assignments": {
+        "assignments": [
+          {
+            "id": "d7086178-5d64-44fd-966a-92966fd00ec6",
+            "name": "pretty_JSON",
+            "value": "={\n\"name\": \"{{ $json.filename }}\",\n\"nodes\": {{ JSON.stringify($('If not archived').item.json.nodes, null, 2) }},\n\"connections\": {{ JSON.stringify($('If not archived').item.json.connections, null, 2) }}\n}",
+            "type": "string"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+      1920,
+      80
+    ],
+    "id": "db047ce9-5286-4a33-a12e-97feabda9e25",
+    "name": "Prettify JSON"
+  },
+  {
+    "parameters": {
+      "operation": "toText",
+      "sourceProperty": "pretty_JSON",
+      "binaryPropertyName": "workflow_JSON",
+      "options": {
+        "fileName": "={{ $('Set Filename').item.json.filename }}"
+      }
+    },
+    "type": "n8n-nodes-base.convertToFile",
+    "typeVersion": 1.1,
+    "position": [
+      2096,
+      160
+    ],
+    "id": "c65aeb8a-8d27-4941-ba3b-8fe7c2d378ef",
+    "name": "Convert to File"
+  },
+  {
+    "parameters": {
+      "resource": "file",
+      "owner": {
+        "__rl": true,
+        "value": "chriskevini",
+        "mode": "name"
+      },
+      "repository": {
+        "__rl": true,
+        "value": "n8n",
+        "mode": "list",
+        "cachedResultName": "n8n",
+        "cachedResultUrl": "https://github.com/chriskevini/n8n"
+      },
+      "filePath": "={{ $('Set Filename').item.json.filename }}",
+      "binaryData": true,
+      "binaryPropertyName": "workflow_JSON",
+      "commitMessage": "=Create {{ $('If not archived').item.json.name }}"
+    },
+    "type": "n8n-nodes-base.github",
+    "typeVersion": 1.1,
+    "position": [
+      2416,
+      288
+    ],
+    "id": "de664163-f9e2-47e8-be83-613af70fa012",
+    "name": "Create a file",
+    "webhookId": "4174adfe-82de-40cf-86f9-3ca680098d23",
+    "credentials": {
+      "githubApi": {
+        "id": "1zNcLOJ1GGbLd9yT",
+        "name": "N8N"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "BHFwj2lAWNvwGXTx",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/BHFwj2lAWNvwGXTx",
+        "cachedResultName": "Safe send message to #bot-logs"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "message": "=Pushed {{$input.all().length}} files to n8n repo."
+        },
+        "matchingColumns": [
+          "message"
+        ],
+        "schema": [
+          {
+            "id": "message",
+            "displayName": "message",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.3,
+    "position": [
+      1312,
+      -48
+    ],
+    "id": "3f8e97fe-2d81-4806-b5e4-fc348e1bcec4",
+    "name": "Safe send completion to #bot-logs"
+  },
+  {
+    "parameters": {
+      "assignments": {
+        "assignments": [
+          {
+            "id": "f9233576-9511-4b10-bfd7-31c2a6e8c265",
+            "name": "filename",
+            "value": "={{ $json.name.replace(/ /g, '_') }}.json",
+            "type": "string"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+      1520,
+      112
+    ],
+    "id": "04081096-828f-4500-b224-974cf9ff213b",
+    "name": "Set Filename"
+  },
+  {
+    "parameters": {
+      "aggregate": "aggregateAllItemData",
+      "options": {}
+    },
+    "type": "n8n-nodes-base.aggregate",
+    "typeVersion": 1,
+    "position": [
+      992,
+      32
+    ],
+    "id": "3d0d1f48-0540-4d3c-91dd-83f6e5a945a8",
+    "name": "Aggregate"
+  }
+],
+"connections": {
+  "When clicking ‘Execute workflow’": {
+    "main": [
+      [
+        {
+          "node": "List files",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get many workflows": {
+    "main": [
+      [
+        {
+          "node": "Loop Over Items",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Loop Over Items": {
+    "main": [
+      [
+        {
+          "node": "Aggregate",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "If not archived",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Edit a file": {
+    "main": [
+      [
+        {
+          "node": "Loop Over Items",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "List files": {
+    "main": [
+      [
+        {
+          "node": "Get list of filenames",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get list of filenames": {
+    "main": [
+      [
+        {
+          "node": "Get many workflows",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If file exists": {
+    "main": [
+      [
+        {
+          "node": "Loop Over Items",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Create a file",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If not archived": {
+    "main": [
+      [
+        {
+          "node": "Set Filename",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Loop Over Items",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Prettify JSON": {
+    "main": [
+      [
+        {
+          "node": "Convert to File",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Convert to File": {
+    "main": [
+      [
+        {
+          "node": "If file exists",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Create a file": {
+    "main": [
+      [
+        {
+          "node": "Loop Over Items",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Set Filename": {
+    "main": [
+      [
+        {
+          "node": "Prettify JSON",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Aggregate": {
+    "main": [
+      [
+        {
+          "node": "Safe send completion to #bot-logs",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}
+}
