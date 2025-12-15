@@ -1,0 +1,318 @@
+{
+"name": "Janitor.json",
+"nodes": [
+  {
+    "parameters": {
+      "workflowInputs": {
+        "values": [
+          {
+            "name": "channel_id"
+          }
+        ]
+      }
+    },
+    "type": "n8n-nodes-base.executeWorkflowTrigger",
+    "typeVersion": 1.1,
+    "position": [
+      -400,
+      0
+    ],
+    "id": "5b20fc4f-6704-419f-a690-8e9cdeaa7171",
+    "name": "Given a channel_id"
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "operation": "getAll",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "={{ $json.channel_id }}",
+        "mode": "id"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      -176,
+      0
+    ],
+    "id": "083b2458-800a-448a-b531-63427c822c6f",
+    "name": "Get last 100 messages",
+    "webhookId": "64eebbea-6525-44bb-8ffe-4c9b18c76865",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "fa602bb1-5ef3-4001-a0b8-8832b3ef09d3",
+            "leftValue": "={{ $json.author.username }}",
+            "rightValue": "Bot",
+            "operator": {
+              "type": "string",
+              "operation": "contains"
+            }
+          },
+          {
+            "id": "f262963c-3d62-4ff2-8636-5bee8a996602",
+            "leftValue": "={{ $json.author.username }}",
+            "rightValue": "bot",
+            "operator": {
+              "type": "string",
+              "operation": "contains"
+            }
+          }
+        ],
+        "combinator": "or"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      48,
+      0
+    ],
+    "id": "007c3c20-64b8-4298-90b9-af805c0c9d96",
+    "name": "If sender name contains \"Bot\" or \"bot\""
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "operation": "deleteMessage",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "={{ $('Get last 100 messages').item.json.channel_id }}",
+        "mode": "id"
+      },
+      "messageId": "={{ $('Get last 100 messages').item.json.id }}"
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      496,
+      96
+    ],
+    "id": "8f55321c-f8ef-419b-bc0d-2d3a1d73790b",
+    "name": "Delete message",
+    "webhookId": "abc39021-fd88-4ecf-99ee-96ce9133830f",
+    "retryOnFail": true,
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    },
+    "onError": "continueErrorOutput"
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "1448633907934265375",
+        "mode": "list",
+        "cachedResultName": "bot-logs",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388/1448633907934265375"
+      },
+      "content": "={{ $input.all().length }} bot messages cleaned up in <#{{ $('Given a channel_id').item.json.channel_id }}> ",
+      "options": {}
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      496,
+      -96
+    ],
+    "id": "916f737b-a1bf-4b7f-bab5-59dd2749c276",
+    "name": "Log summary of deletions to #bot-logs",
+    "webhookId": "ed30b7a4-f22a-4334-af30-df3613113fe8",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "options": {}
+    },
+    "type": "n8n-nodes-base.splitInBatches",
+    "typeVersion": 3,
+    "position": [
+      272,
+      0
+    ],
+    "id": "5110b396-4162-4ee2-822a-d5d3a96ac52f",
+    "name": "Loop Over Items",
+    "executeOnce": true
+  },
+  {
+    "parameters": {
+      "amount": 1
+    },
+    "type": "n8n-nodes-base.wait",
+    "typeVersion": 1.1,
+    "position": [
+      720,
+      80
+    ],
+    "id": "6c50c249-a393-443d-958b-2b1e8fa52d3d",
+    "name": "Wait 1 second",
+    "webhookId": "5b55790e-c747-4737-9796-ad4c40772cbe"
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "1448633907934265375",
+        "mode": "list",
+        "cachedResultName": "bot-logs",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388/1448633907934265375"
+      },
+      "content": "={{ $input.all().length }} bot messages cleaned up in <#{{ $('Given a channel_id').item.json.channel_id }}> but exited with an error.",
+      "options": {}
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      720,
+      272
+    ],
+    "id": "ebb70a54-7568-4dd7-9d0e-6afa20892542",
+    "name": "Send error message to #bot-logs",
+    "webhookId": "29826d41-3df7-484b-a7f5-4f8281dc3ec4",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  }
+],
+"connections": {
+  "Given a channel_id": {
+    "main": [
+      [
+        {
+          "node": "Get last 100 messages",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get last 100 messages": {
+    "main": [
+      [
+        {
+          "node": "If sender name contains \"Bot\" or \"bot\"",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If sender name contains \"Bot\" or \"bot\"": {
+    "main": [
+      [
+        {
+          "node": "Loop Over Items",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Delete message": {
+    "main": [
+      [
+        {
+          "node": "Wait 1 second",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Send error message to #bot-logs",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Loop Over Items": {
+    "main": [
+      [
+        {
+          "node": "Log summary of deletions to #bot-logs",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Delete message",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Wait 1 second": {
+    "main": [
+      [
+        {
+          "node": "Loop Over Items",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}
+}
