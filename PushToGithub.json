@@ -26,7 +26,7 @@
         "value": "n8n",
         "mode": "name"
       },
-      "filePath": "=/{{$('If not archived').item.json.name}}.json",
+      "filePath": "={{$('If not archived').item.json.name}}.json",
       "binaryData": true,
       "binaryPropertyName": "workflow_JSON",
       "commitMessage": "=Update {{ $('If not archived').item.json.name }}"
@@ -352,6 +352,19 @@
     ],
     "id": "57353fc7-575d-4e55-9493-98937b24a10e",
     "name": "If"
+  },
+  {
+    "parameters": {
+      "jsCode": "// Loop over input items and add a new field called 'myNewField' to the JSON of each one\nfor (const item of $input.all()) {\n  item.json.myNewField = 1;\n}\n\nreturn $input.all();"
+    },
+    "type": "n8n-nodes-base.code",
+    "typeVersion": 2,
+    "position": [
+      2080,
+      -16
+    ],
+    "id": "d6501297-0663-4089-86ec-1a996083d2f3",
+    "name": "Code in JavaScript"
   }
 ],
 "connections": {
