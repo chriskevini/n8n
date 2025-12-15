@@ -1,0 +1,383 @@
+{
+"name": "Fetch_Discord_messages_from_date.json",
+"nodes": [
+  {
+    "parameters": {
+      "workflowInputs": {
+        "values": [
+          {
+            "name": "target_date"
+          },
+          {
+            "name": "channel_id"
+          }
+        ]
+      }
+    },
+    "type": "n8n-nodes-base.executeWorkflowTrigger",
+    "typeVersion": 1.1,
+    "position": [
+      272,
+      592
+    ],
+    "id": "4f945c71-fb52-4275-9de7-cbe29032891e",
+    "name": "When Executed by Another Workflow"
+  },
+  {
+    "parameters": {
+      "url": "=https://discord.com/api/v10/channels/{{ $json.channel_id }}/messages",
+      "authentication": "predefinedCredentialType",
+      "nodeCredentialType": "discordBotApi",
+      "sendQuery": true,
+      "queryParameters": {
+        "parameters": [
+          {
+            "name": "limit",
+            "value": "100"
+          },
+          {
+            "name": "before",
+            "value": "={{ $json.id }}"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.httpRequest",
+    "typeVersion": 4.3,
+    "position": [
+      1392,
+      672
+    ],
+    "id": "9c631077-abaa-4097-bac4-4c904de1a6a7",
+    "name": "Get more messages",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "resource": "message",
+      "operation": "getAll",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "={{ $('When Executed by Another Workflow').item.json.channel_id }}",
+        "mode": "id"
+      },
+      "options": {
+        "simplify": false
+      }
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      496,
+      592
+    ],
+    "id": "875faf92-3163-42d4-b82c-825d447b1348",
+    "name": "Get last 100 messages",
+    "webhookId": "eea18093-ed94-4021-8cdb-f374e0c19eee",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "7aae0980-b951-438b-bf5c-802506ff8cd5",
+            "leftValue": "={{ $json.timestamp }}",
+            "rightValue": "={{ $('When Executed by Another Workflow').item.json.target_date }}",
+            "operator": {
+              "type": "dateTime",
+              "operation": "before"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      1152,
+      672
+    ],
+    "id": "f9300e82-7928-4dc9-9b6f-c76c8c32dff6",
+    "name": "If relevant dates found"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "b4748f95-6288-4a87-bdc5-715ac996029e",
+            "leftValue": "={{ $json.timestamp }}",
+            "rightValue": "={{ $('When Executed by Another Workflow').item.json.target_date }}",
+            "operator": {
+              "type": "dateTime",
+              "operation": "after"
+            }
+          },
+          {
+            "id": "6133e159-5006-40e0-99f1-4bfdef0e939b",
+            "leftValue": "={{ $json.timestamp }}",
+            "rightValue": "={{ $('When Executed by Another Workflow').item.json.target_date.toDateTime().plus(24,'hours') }}",
+            "operator": {
+              "type": "dateTime",
+              "operation": "before"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.filter",
+    "typeVersion": 2.3,
+    "position": [
+      1792,
+      416
+    ],
+    "id": "c1ab111f-8bda-4b1e-a4c9-da7cb8ed2abb",
+    "name": "Filter for correct date"
+  },
+  {
+    "parameters": {
+      "keep": "lastItems"
+    },
+    "type": "n8n-nodes-base.limit",
+    "typeVersion": 1,
+    "position": [
+      928,
+      672
+    ],
+    "id": "75f2d382-808e-47ad-a90e-169272362cc6",
+    "name": "Get oldest message"
+  },
+  {
+    "parameters": {
+      "mode": "chooseBranch"
+    },
+    "type": "n8n-nodes-base.merge",
+    "typeVersion": 3.2,
+    "position": [
+      2288,
+      432
+    ],
+    "id": "9b875bfa-fed2-4fde-8e36-9761391c566f",
+    "name": "Ready to output"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "059ebeb8-01c3-4690-bfb1-41e1d7ece7a6",
+            "leftValue": "={{$json.keys().length}}",
+            "rightValue": 100,
+            "operator": {
+              "type": "number",
+              "operation": "lt"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      1664,
+      656
+    ],
+    "id": "7194030f-2693-4311-8d4d-34cf7deabe6c",
+    "name": "If got to end of channel history",
+    "executeOnce": true,
+    "notes": "Broken.\nThe oldest messages are 2025-12-10 but the workflow doesnt output.\nAlso, dates earlier than 2025-12-10 should output an empty list."
+  },
+  {
+    "parameters": {},
+    "type": "n8n-nodes-base.merge",
+    "typeVersion": 3.2,
+    "position": [
+      1584,
+      416
+    ],
+    "id": "08cf88c4-a298-4c48-ac9c-3618f29149ba",
+    "name": "Merge"
+  },
+  {
+    "parameters": {
+      "sortFieldsUi": {
+        "sortField": [
+          {
+            "fieldName": "timestamp"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.sort",
+    "typeVersion": 1,
+    "position": [
+      1984,
+      416
+    ],
+    "id": "9a8bce9d-712b-47b9-b506-4d048e1b1930",
+    "name": "Sort"
+  }
+],
+"connections": {
+  "When Executed by Another Workflow": {
+    "main": [
+      [
+        {
+          "node": "Get last 100 messages",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get more messages": {
+    "main": [
+      [
+        {
+          "node": "Get oldest message",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Merge",
+          "type": "main",
+          "index": 1
+        }
+      ]
+    ]
+  },
+  "Get last 100 messages": {
+    "main": [
+      [
+        {
+          "node": "Get oldest message",
+          "type": "main",
+          "index": 0
+        },
+        {
+          "node": "Merge",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If relevant dates found": {
+    "main": [
+      [
+        {
+          "node": "Ready to output",
+          "type": "main",
+          "index": 1
+        }
+      ],
+      [
+        {
+          "node": "Get more messages",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get oldest message": {
+    "main": [
+      [
+        {
+          "node": "If relevant dates found",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Filter for correct date": {
+    "main": [
+      [
+        {
+          "node": "Sort",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If got to end of channel history": {
+    "main": [
+      [
+        {
+          "node": "Ready to output",
+          "type": "main",
+          "index": 1
+        }
+      ]
+    ]
+  },
+  "Merge": {
+    "main": [
+      [
+        {
+          "node": "Filter for correct date",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Sort": {
+    "main": [
+      [
+        {
+          "node": "Ready to output",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}
+}
