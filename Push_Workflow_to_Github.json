@@ -1,0 +1,468 @@
+{
+"name": "Push_Workflow_to_Github.json",
+"nodes": [
+  {
+    "parameters": {},
+    "type": "n8n-nodes-base.manualTrigger",
+    "typeVersion": 1,
+    "position": [
+      -80,
+      112
+    ],
+    "id": "a7ff39dc-5ddb-438e-9397-99acfbaba0db",
+    "name": "When clicking ‘Execute workflow’"
+  },
+  {
+    "parameters": {
+      "resource": "file",
+      "operation": "edit",
+      "owner": {
+        "__rl": true,
+        "value": "chriskevini",
+        "mode": "name"
+      },
+      "repository": {
+        "__rl": true,
+        "value": "n8n",
+        "mode": "name"
+      },
+      "filePath": "={{ $('Set Filename').item.json.filename }}",
+      "binaryData": true,
+      "binaryPropertyName": "workflow_JSON",
+      "commitMessage": "=Update {{ $('If not archived').item.json.name }}"
+    },
+    "type": "n8n-nodes-base.github",
+    "typeVersion": 1.1,
+    "position": [
+      1936,
+      16
+    ],
+    "id": "201abdb0-7d6d-4455-a7b7-c3bb27fc5758",
+    "name": "Edit a file",
+    "webhookId": "eaa3cec4-28d1-46c9-a68c-772b763702cd",
+    "credentials": {
+      "githubApi": {
+        "id": "1zNcLOJ1GGbLd9yT",
+        "name": "N8N"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "resource": "file",
+      "operation": "list",
+      "owner": {
+        "__rl": true,
+        "value": "chriskevini",
+        "mode": "name"
+      },
+      "repository": {
+        "__rl": true,
+        "value": "n8n",
+        "mode": "list",
+        "cachedResultName": "n8n",
+        "cachedResultUrl": "https://github.com/chriskevini/n8n"
+      }
+    },
+    "type": "n8n-nodes-base.github",
+    "typeVersion": 1.1,
+    "position": [
+      592,
+      112
+    ],
+    "id": "54f65906-7fbb-40ef-9428-6ecc6d18bc1a",
+    "name": "List files",
+    "webhookId": "1a92aa07-f308-4058-a42c-89cd2f0356e5",
+    "credentials": {
+      "githubApi": {
+        "id": "1zNcLOJ1GGbLd9yT",
+        "name": "N8N"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "fieldsToAggregate": {
+        "fieldToAggregate": [
+          {
+            "fieldToAggregate": "name"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.aggregate",
+    "typeVersion": 1,
+    "position": [
+      816,
+      112
+    ],
+    "id": "54812cee-084f-44cc-b5a9-3b8189238e67",
+    "name": "Get list of filenames"
+  },
+  {
+    "parameters": {
+      "conditions": {
+        "options": {
+          "caseSensitive": true,
+          "leftValue": "",
+          "typeValidation": "strict",
+          "version": 3
+        },
+        "conditions": [
+          {
+            "id": "b2507fcc-2289-48d3-9499-c67ebf8e0067",
+            "leftValue": "={{ $('Get list of filenames').item.json.name }}",
+            "rightValue": "={{$('If not archived').item.json.name}}.json",
+            "operator": {
+              "type": "array",
+              "operation": "contains",
+              "rightType": "any"
+            }
+          },
+          {
+            "id": "3b3748f0-e4a2-45d1-8e6e-54d70352d686",
+            "leftValue": "={{$('If not archived').item.json.name}}.json",
+            "rightValue": " ",
+            "operator": {
+              "type": "string",
+              "operation": "notContains"
+            }
+          }
+        ],
+        "combinator": "and"
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.if",
+    "typeVersion": 2.3,
+    "position": [
+      1712,
+      112
+    ],
+    "id": "71f504f5-8b0e-4c30-bc5b-f5f12544ac0d",
+    "name": "If file exists"
+  },
+  {
+    "parameters": {
+      "assignments": {
+        "assignments": [
+          {
+            "id": "d7086178-5d64-44fd-966a-92966fd00ec6",
+            "name": "pretty_JSON",
+            "value": "={\n\"name\": \"{{ $json.filename }}\",\n\"nodes\": {{ JSON.stringify($('If not archived').item.json.nodes, null, 2) }},\n\"connections\": {{ JSON.stringify($('If not archived').item.json.connections, null, 2) }}\n}",
+            "type": "string"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+      1264,
+      112
+    ],
+    "id": "23c9a63d-05c0-4087-bf0b-7b523ea938ec",
+    "name": "Prettify JSON"
+  },
+  {
+    "parameters": {
+      "operation": "toText",
+      "sourceProperty": "pretty_JSON",
+      "binaryPropertyName": "workflow_JSON",
+      "options": {
+        "fileName": "={{ $('Set Filename').item.json.filename }}"
+      }
+    },
+    "type": "n8n-nodes-base.convertToFile",
+    "typeVersion": 1.1,
+    "position": [
+      1488,
+      112
+    ],
+    "id": "ee4d9d0c-e5ad-4acf-a824-8e25c75fbdc2",
+    "name": "Convert to File"
+  },
+  {
+    "parameters": {
+      "resource": "file",
+      "owner": {
+        "__rl": true,
+        "value": "chriskevini",
+        "mode": "name"
+      },
+      "repository": {
+        "__rl": true,
+        "value": "n8n",
+        "mode": "list",
+        "cachedResultName": "n8n",
+        "cachedResultUrl": "https://github.com/chriskevini/n8n"
+      },
+      "filePath": "={{ $('Set Filename').item.json.filename }}",
+      "binaryData": true,
+      "binaryPropertyName": "workflow_JSON",
+      "commitMessage": "=Create {{ $('If not archived').item.json.name }}"
+    },
+    "type": "n8n-nodes-base.github",
+    "typeVersion": 1.1,
+    "position": [
+      1936,
+      208
+    ],
+    "id": "93b38518-1df8-409a-a775-d178e7f0759c",
+    "name": "Create a file",
+    "webhookId": "c7ffc915-352d-4145-971d-478bfdcd58c7",
+    "credentials": {
+      "githubApi": {
+        "id": "1zNcLOJ1GGbLd9yT",
+        "name": "N8N"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "BHFwj2lAWNvwGXTx",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/BHFwj2lAWNvwGXTx",
+        "cachedResultName": "Safe send message to #bot-logs"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "message": "=Pushed {{ $json.data.length }} files to n8n repo."
+        },
+        "matchingColumns": [
+          "message"
+        ],
+        "schema": [
+          {
+            "id": "message",
+            "displayName": "message",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.3,
+    "position": [
+      2160,
+      112
+    ],
+    "id": "ef7926f5-1ca0-4649-858b-50933299b603",
+    "name": "Safe send completion to #bot-logs"
+  },
+  {
+    "parameters": {
+      "assignments": {
+        "assignments": [
+          {
+            "id": "f9233576-9511-4b10-bfd7-31c2a6e8c265",
+            "name": "filename",
+            "value": "={{ $json.name.replace(/ /g, '_') }}.json",
+            "type": "string"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+      1040,
+      112
+    ],
+    "id": "52617c63-759f-4099-90b7-2757ece880c0",
+    "name": "Set Filename"
+  },
+  {
+    "parameters": {
+      "assignments": {
+        "assignments": [
+          {
+            "id": "e7d914e2-5596-4a99-b63e-273d4fd97326",
+            "name": "commit_message",
+            "value": "",
+            "type": "string"
+          }
+        ]
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.set",
+    "typeVersion": 3.4,
+    "position": [
+      368,
+      112
+    ],
+    "id": "b998909c-9dd7-48fb-9cc0-c9cae6fb02be",
+    "name": "Set commit message"
+  },
+  {
+    "parameters": {
+      "operation": "get",
+      "workflowId": {
+        "__rl": true,
+        "value": "vJ0LS4xUX1U17AQY",
+        "mode": "list",
+        "cachedResultName": "Push Workflows to Github (#vJ0LS4xUX1U17AQY)"
+      },
+      "requestOptions": {}
+    },
+    "type": "n8n-nodes-base.n8n",
+    "typeVersion": 1,
+    "position": [
+      144,
+      112
+    ],
+    "id": "2a9f0960-1a17-4a00-9047-1c637f33f32c",
+    "name": "Select workflow",
+    "credentials": {
+      "n8nApi": {
+        "id": "DIY6XVnD28bUTQv6",
+        "name": "n8n account"
+      }
+    }
+  }
+],
+"connections": {
+  "When clicking ‘Execute workflow’": {
+    "main": [
+      [
+        {
+          "node": "Select workflow",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Edit a file": {
+    "main": [
+      [
+        {
+          "node": "Safe send completion to #bot-logs",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "List files": {
+    "main": [
+      [
+        {
+          "node": "Get list of filenames",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Get list of filenames": {
+    "main": [
+      [
+        {
+          "node": "Set Filename",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "If file exists": {
+    "main": [
+      [
+        {
+          "node": "Edit a file",
+          "type": "main",
+          "index": 0
+        }
+      ],
+      [
+        {
+          "node": "Create a file",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Prettify JSON": {
+    "main": [
+      [
+        {
+          "node": "Convert to File",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Convert to File": {
+    "main": [
+      [
+        {
+          "node": "If file exists",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Create a file": {
+    "main": [
+      [
+        {
+          "node": "Safe send completion to #bot-logs",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Set Filename": {
+    "main": [
+      [
+        {
+          "node": "Prettify JSON",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Set commit message": {
+    "main": [
+      [
+        {
+          "node": "List files",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Select workflow": {
+    "main": [
+      [
+        {
+          "node": "Set commit message",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+},
+}
