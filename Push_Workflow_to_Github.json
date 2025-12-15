@@ -29,7 +29,7 @@
       "filePath": "={{ $('Set Filename').item.json.filename }}",
       "binaryData": true,
       "binaryPropertyName": "workflow_JSON",
-      "commitMessage": "=Update {{ $('If not archived').item.json.name }}"
+      "commitMessage": "={{ $('Set commit message').item.json.commit_message || \"Update \" + $('Set Filename').item.json.name}}"
     },
     "type": "n8n-nodes-base.github",
     "typeVersion": 1.1,
@@ -113,20 +113,11 @@
           {
             "id": "b2507fcc-2289-48d3-9499-c67ebf8e0067",
             "leftValue": "={{ $('Get list of filenames').item.json.name }}",
-            "rightValue": "={{$('If not archived').item.json.name}}.json",
+            "rightValue": "={{ $('Set Filename').item.json.filename }}",
             "operator": {
               "type": "array",
               "operation": "contains",
               "rightType": "any"
-            }
-          },
-          {
-            "id": "3b3748f0-e4a2-45d1-8e6e-54d70352d686",
-            "leftValue": "={{$('If not archived').item.json.name}}.json",
-            "rightValue": " ",
-            "operator": {
-              "type": "string",
-              "operation": "notContains"
             }
           }
         ],
@@ -150,7 +141,7 @@
           {
             "id": "d7086178-5d64-44fd-966a-92966fd00ec6",
             "name": "pretty_JSON",
-            "value": "={\n\"name\": \"{{ $json.filename }}\",\n\"nodes\": {{ JSON.stringify($('If not archived').item.json.nodes, null, 2) }},\n\"connections\": {{ JSON.stringify($('If not archived').item.json.connections, null, 2) }}\n}",
+            "value": "={\n\"name\": \"{{ $json.filename }}\",\n\"nodes\": {{ JSON.stringify($json.nodes, null, 2) }},\n\"connections\": {{ JSON.stringify($json.connections, null, 2) }},\n}",
             "type": "string"
           }
         ]
@@ -202,7 +193,7 @@
       "filePath": "={{ $('Set Filename').item.json.filename }}",
       "binaryData": true,
       "binaryPropertyName": "workflow_JSON",
-      "commitMessage": "=Create {{ $('If not archived').item.json.name }}"
+      "commitMessage": "={{ $('Set commit message').item.json.commit_message || \"Create \" + $('Set Filename').item.json.name}}"
     },
     "type": "n8n-nodes-base.github",
     "typeVersion": 1.1,
@@ -232,7 +223,7 @@
       "workflowInputs": {
         "mappingMode": "defineBelow",
         "value": {
-          "message": "=Pushed {{ $json.data.length }} files to n8n repo."
+          "message": "=Pushed {{ $('Set Filename').item.json.filename }} to n8n repo."
         },
         "matchingColumns": [
           "message"
@@ -269,8 +260,26 @@
           {
             "id": "f9233576-9511-4b10-bfd7-31c2a6e8c265",
             "name": "filename",
-            "value": "={{ $json.name.replace(/ /g, '_') }}.json",
+            "value": "={{ $('Select workflow').item.json.name.replace(/ /g, '_') }}.json",
             "type": "string"
+          },
+          {
+            "id": "ad698270-abad-40ff-bfd6-34b38ce80128",
+            "name": "name",
+            "value": "={{ $('Select workflow').item.json.name }}",
+            "type": "string"
+          },
+          {
+            "id": "279ac2d0-93e0-4c38-b998-9b489d589087",
+            "name": "nodes",
+            "value": "={{ $('Select workflow').item.json.nodes }}",
+            "type": "array"
+          },
+          {
+            "id": "b57eee7f-abbf-49a1-ac46-a78a6c9551c8",
+            "name": "connections",
+            "value": "={{ $('Select workflow').item.json.connections }}",
+            "type": "object"
           }
         ]
       },
@@ -315,7 +324,7 @@
         "__rl": true,
         "value": "vJ0LS4xUX1U17AQY",
         "mode": "list",
-        "cachedResultName": "Push Workflows to Github (#vJ0LS4xUX1U17AQY)"
+        "cachedResultName": "Push Workflow to Github (#vJ0LS4xUX1U17AQY)"
       },
       "requestOptions": {}
     },
