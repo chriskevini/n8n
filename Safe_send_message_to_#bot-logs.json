@@ -1,0 +1,140 @@
+{
+"name": "Safe_send_message_to_#bot-logs.json",
+"nodes": [
+  {
+    "parameters": {
+      "operation": "get",
+      "guildId": {
+        "__rl": true,
+        "value": "754207117157859388",
+        "mode": "list",
+        "cachedResultName": "chris's server",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388"
+      },
+      "channelId": {
+        "__rl": true,
+        "value": "1448633907934265375",
+        "mode": "list",
+        "cachedResultName": "bot-logs",
+        "cachedResultUrl": "https://discord.com/channels/754207117157859388/1448633907934265375"
+      }
+    },
+    "type": "n8n-nodes-base.discord",
+    "typeVersion": 2,
+    "position": [
+      912,
+      272
+    ],
+    "id": "ae849c3a-cd3e-4c09-bfdd-b7cbdb0bd614",
+    "name": "Get a channel",
+    "webhookId": "248ee8db-99f9-4c14-9f65-a80c2429e8f4",
+    "credentials": {
+      "discordBotApi": {
+        "id": "hvetTjtpeKFB1V0I",
+        "name": "Discord Bot account"
+      }
+    }
+  },
+  {
+    "parameters": {
+      "workflowId": {
+        "__rl": true,
+        "value": "7Tr9Y04cO4tA6uGL",
+        "mode": "list",
+        "cachedResultUrl": "/workflow/7Tr9Y04cO4tA6uGL",
+        "cachedResultName": "Safe send message to Discord channel"
+      },
+      "workflowInputs": {
+        "mappingMode": "defineBelow",
+        "value": {
+          "message": "={{ $('Start').item.json.message }}",
+          "channel_id": "={{ $json.id }}"
+        },
+        "matchingColumns": [
+          "date_firstItem",
+          "transcript_length",
+          "transcript_slice",
+          "transcript"
+        ],
+        "schema": [
+          {
+            "id": "message",
+            "displayName": "message",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string",
+            "removed": false
+          },
+          {
+            "id": "channel_id",
+            "displayName": "channel_id",
+            "required": false,
+            "defaultMatch": false,
+            "display": true,
+            "canBeUsedToMatch": true,
+            "type": "string",
+            "removed": false
+          }
+        ],
+        "attemptToConvertTypes": false,
+        "convertFieldsToString": true
+      },
+      "options": {}
+    },
+    "type": "n8n-nodes-base.executeWorkflow",
+    "typeVersion": 1.2,
+    "position": [
+      1184,
+      208
+    ],
+    "name": "Safe send message to Discord channel",
+    "id": "31a14f8a-8cfd-45c1-9b9b-71992991d038"
+  },
+  {
+    "parameters": {
+      "workflowInputs": {
+        "values": [
+          {
+            "name": "message",
+            "type": "any"
+          }
+        ]
+      }
+    },
+    "id": "fdf3b8bb-c202-4c44-b0df-a6ce14fc417c",
+    "typeVersion": 1.1,
+    "name": "Start",
+    "type": "n8n-nodes-base.executeWorkflowTrigger",
+    "position": [
+      704,
+      272
+    ]
+  }
+],
+"connections": {
+  "Get a channel": {
+    "main": [
+      [
+        {
+          "node": "Safe send message to Discord channel",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  },
+  "Start": {
+    "main": [
+      [
+        {
+          "node": "Get a channel",
+          "type": "main",
+          "index": 0
+        }
+      ]
+    ]
+  }
+}
+}
