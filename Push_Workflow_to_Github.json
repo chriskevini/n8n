@@ -223,7 +223,7 @@
       "workflowInputs": {
         "mappingMode": "defineBelow",
         "value": {
-          "message": "=Pushed {{ $('Set Filename').item.json.filename }}{{ $('Set commit message').item.json.commit_message ? \"with message: \" + $('Set commit message').item.json.commit_message : \"\"}}"
+          "message": "=Pushed {{ $('Set Filename').item.json.filename + $('Set commit message').item.json.commit_message ? \" with message: \" + $('Set commit message').item.json.commit_message : \"\"}}"
         },
         "matchingColumns": [
           "message"
@@ -301,7 +301,7 @@
           {
             "id": "e7d914e2-5596-4a99-b63e-273d4fd97326",
             "name": "commit_message",
-            "value": "",
+            "value": "Add logs for commit messages",
             "type": "string"
           }
         ]
